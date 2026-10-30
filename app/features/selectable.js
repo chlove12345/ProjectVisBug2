@@ -32,6 +32,7 @@ export function Selectable(visbug, history) {
   let rotations           = []
   let selectionActionPointerDown = false
   let selectionActionPointerTimer
+  let pointerPosition = null
 
   const hover_state       = {
     target:   null,
@@ -107,6 +108,8 @@ export function Selectable(visbug, history) {
     }
 
     if (e.composedPath().some(isOffBounds)) return
+
+    pointerPosition = {x: e.clientX, y: e.clientY}
 
     const $target = deepElementFromPoint(e.clientX, e.clientY)
 
@@ -268,21 +271,32 @@ export function Selectable(visbug, history) {
     }
   }
 
-  const on_paste = async (e, index = 0) => {
-    const clipData = e.clipboardData.getData('text/html')
-    const globalClipboard = await navigator.clipboard.readText()
-    const potentialHTML = clipData || globalClipboard || window.copy_backup
+  const on_paste = e => {
+    if (!pointerPosition || e.composedPath().some(node =>
+      node?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(node?.tagName))) return
 
-    if (selected.length && potentialHTML) {
-      e.preventDefault()
+    const potentialHTML = e.clipboardData?.getData('text/html')
+      || e.clipboardData?.getData('text/plain')
+      || (!e.clipboardData && window.copy_backup)
+    if (!potentialHTML) return
 
-      const changes = selected.map(el => {
-        const element = htmlStringToDom(potentialHTML)
-        el.appendChild(element)
-        return new DOMChange({element, oldPosition: null, newPosition: domPosition(element)})
-      })
-      history?.push(new BatchChange(changes))
-    }
+    const element = htmlStringToDom(potentialHTML.trim())
+    if (!(element instanceof Element)) return
+
+    e.preventDefault()
+    element.style.position = 'absolute'
+    element.style.left = '0px'
+    element.style.top = '0px'
+    page.appendChild(element)
+
+    const {left, top} = element.getBoundingClientRect()
+    element.style.left = `${pointerPosition.x - left}px`
+    element.style.top = `${pointerPosition.y - top}px`
+    history?.push(new DOMChange({
+      element,
+      oldPosition: null,
+      newPosition: domPosition(element),
+    }))
   }
 
   const on_copy_styles = async e => {
@@ -506,6 +520,8 @@ export function Selectable(visbug, history) {
 
     const $target = deepElementFromPoint(e.clientX, e.clientY)
     const tool = visbug.activeTool
+
+    if (!isOffBounds($target)) pointerPosition = {x: e.clientX, y: e.clientY}
 
     if (isOffBounds($target) || $target.hasAttribute('data-selected') || $target.hasAttribute('draggable')) {
       clearMeasurements()

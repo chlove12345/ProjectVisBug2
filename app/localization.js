@@ -2,6 +2,8 @@ const chinese = {
   'Settings': '设置',
   'Close': '关闭',
   'Language': '语言',
+  'Undo': '撤销',
+  'Redo': '重做',
   'English': 'English',
   'Simplified Chinese': '简体中文',
   'Guides': '参考线',

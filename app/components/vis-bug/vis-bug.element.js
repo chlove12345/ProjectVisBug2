@@ -16,6 +16,7 @@ import {
 
 import {
   VisBugStyles,
+  HistoryControlsStyles,
   VisBugLightStyles,
   VisBugDarkStyles
 } from '../styles.store'
@@ -60,6 +61,7 @@ export default class VisBug extends HTMLElement {
     setLanguage(this.getAttribute('language') || getSavedLanguage())
 
     this.setup()
+    this.setupHistoryControls()
     document.addEventListener('visbug-language-change', this.applyLanguage)
 
     this.selectorEngine = Selectable(this, this.history)
@@ -72,6 +74,8 @@ export default class VisBug extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('visbug-language-change', this.applyLanguage)
+    this.stopHistoryControls?.()
+    this.historyControls?.remove()
     this.closeSettings()
     this.deactivate_feature()
     this.cleanup()
@@ -85,8 +89,10 @@ export default class VisBug extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'color-scheme')
+    if (name === 'color-scheme') {
       this.applyScheme(newValue)
+      this.applyHistoryScheme?.(newValue)
+    }
     if (name === 'language' && newValue !== oldValue)
       setLanguage(newValue)
   }
@@ -178,10 +184,37 @@ export default class VisBug extends HTMLElement {
     })
 
     hotkeys(`${metaKey}+/,${metaKey}+.`, e =>
-      this.$shadow.host.style.display =
-        this.$shadow.host.style.display === 'none'
-          ? 'block'
-          : 'none')
+      this.toggleVisibility())
+  }
+
+  setupHistoryControls() {
+    this.historyControls = document.createElement('visbug-history-controls')
+    this.$historyShadow = this.historyControls.attachShadow({mode: 'closed'})
+    this.applyHistoryScheme = schemeRule(this.$historyShadow, HistoryControlsStyles)
+    this.applyHistoryScheme(this.getAttribute('color-scheme'))
+    this.$historyShadow.innerHTML = `
+      <button type="button" data-undo aria-label="Undo" title="Undo" disabled>${Icons.undo}</button>
+      <button type="button" data-redo aria-label="Redo" title="Redo" disabled>${Icons.redo}</button>
+    `
+
+    this.$historyShadow.querySelector('[data-undo]').addEventListener('click', () => this.history.undo())
+    this.$historyShadow.querySelector('[data-redo]').addEventListener('click', () => this.history.redo())
+    this.$historyShadow.addEventListener('keydown', event => event.stopPropagation())
+    this.stopHistoryControls = this.history.subscribe(() => this.updateHistoryControls())
+    this.historyControls.style.display = this.style.display
+    document.body.append(this.historyControls)
+    this.updateHistoryControls()
+    localize(this.$historyShadow)
+  }
+
+  updateHistoryControls() {
+    this.$historyShadow.querySelector('[data-undo]').disabled = !this.history.canUndo()
+    this.$historyShadow.querySelector('[data-redo]').disabled = !this.history.canRedo()
+  }
+
+  toggleVisibility() {
+    this.style.display = this.style.display === 'none' ? 'block' : 'none'
+    this.historyControls.style.display = this.style.display
   }
 
   cleanup() {
@@ -232,6 +265,7 @@ export default class VisBug extends HTMLElement {
       languageControl.label = translate('Language')
     }
     localize(this.$shadow)
+    localize(this.$historyShadow)
     document.querySelectorAll('visbug-rotation, visbug-handle, visbug-projective-transform')
       .forEach(element => localize(element.$shadow))
   }

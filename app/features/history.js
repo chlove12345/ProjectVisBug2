@@ -182,6 +182,7 @@ export class HistoryManager {
     }
 
     this.redoStack.length = 0
+    this.notify('push', change)
     return true
   }
 
