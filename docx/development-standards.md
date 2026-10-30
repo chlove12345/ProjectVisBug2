@@ -1,0 +1,88 @@
+# VisBug2 后续开发规范
+
+更新日期：2026-10-30
+状态：`dev` 分支上的规范草案，供后续开发和审查使用。
+
+本文分开记录**已存在的项目约定**与**建议从现在开始执行的规则**。公开的 AI 工具反馈用于设计协作流程，不代表 VisBug2 已发生同类问题，也不代表某一款 GPT 产品的总体统计。
+
+## 一、当前代码规范：从仓库提取的事实
+
+| 主题 | 现状与依据 |
+| --- | --- |
+| 基本格式 | `.editorconfig` 规定 UTF-8、LF、文件末尾换行、删除行尾空格、空格缩进 2 格；Makefile 用 Tab。Markdown 和 JSON 不限制行宽。 |
+| 语言与模块 | `package.json` 的 `type` 为 `module`；应用源码使用原生 JavaScript ES modules，入口是 `app/index.js`，Rollup 从此处构建。 |
+| UI 结构 | `vis-bug` 及 `visbug-*` 是自定义元素；组件大多用 Shadow DOM 和 `adoptedStyleSheets` 隔离样式。CSS 文件与对应组件相邻，汇总于 `app/components/styles.store.js`。 |
+| 功能组织 | `app/features/` 按工具分文件；工具启用函数通常注册快捷键或选中回调，并返回停用时调用的清理函数。工具栏在 `app/components/vis-bug/vis-bug.element.js` 中管理切换。 |
+| 选中与覆盖层 | `app/features/selectable.js` 统一管理选择数组、页面事件、选中通知和覆盖层；几何计算在 `app/components/selection/quad.js` 等文件中。 |
+| 可撤销编辑 | `app/features/history.js` 定义 `StyleChange`、`AttributeChange`、`DOMChange`、`TextChange`、`BatchChange` 和 `recordStyleChanges`。部分编辑功能已使用它们。 |
+| 插件 | `app/plugins/_registry.js` 管理命令与选中菜单动作；插件可以激活、停用、注销。`app/plugins/export.js` 按需加载导出依赖。 |
+| 测试 | `app/**/*.test.js` 使用 AVA，页面交互测试通过 Puppeteer 和 `tests/helpers.js` 打开本地演示页。`npm run test:ci` 先构建，再启动服务运行测试。 |
+| 构建 | Rollup 生成 JS，PostCSS 生成 CSS；扩展构建把产物与教程资源复制到 `extension/`。生成的 bundle、chunks、`artifacts/` 已在 `.gitignore` 中。 |
+| 贡献流程 | `CONTRIBUTE.md` 要求从 `main` 建立聚焦的分支，运行构建及相关测试，PR 说明动机、行为变化和验证，并保留上游版权归属。CI 使用 Node.js 24。 |
+
+**不要误读为已有统一风格：**源码中引号、变量命名、对齐空格和分号的用法并不完全一致；仓库没有 ESLint/Prettier 配置。后续改动应优先保持相邻代码的风格，避免为了格式化产生大范围噪声。
+
+## 二、后续开发规则：新增建议
+
+### 1. 分支与变更范围
+
+- 每项开发任务从稳定基线建立独立分支，分支名表达用途；本次文档在 `dev` 分支完成。不要将 `dev` 自动合并到 `main`。推送、建 PR、合并和发布应按用户明确要求执行。
+- 开始前记录 `git status --short --branch`。如果工作区已有改动，先识别其归属；只修改当前任务需要的部分，不重置、覆盖或暂存无关工作。
+- 一次提交围绕一个目标。小改动使用局部补丁；完成后检查 `git diff --check`、差异统计和逐文件差异，特别留意意外的整文件改写。
+- 维护 fork 时保持 `LICENSE`、原作者及上游归属；引入上游更新时单独记录来源和冲突处理。
+
+### 2. JavaScript 与组件
+
+- 遵守 `.editorconfig`，沿用 ES modules、现有文件布局和相邻代码的命名/引号习惯。新代码力求职责明确、函数短小；不要为统一风格而批量格式化旧文件。
+- 自定义元素在 `connectedCallback` 中建立的监听器和资源，应在 `disconnectedCallback` 中释放。功能模块在启用时注册的热键、事件、`MutationObserver`、计时器与动画帧，应由返回的清理函数成对撤销。
+- 工具栏按钮、快捷键说明和实际行为保持一致。新工具若要显示在工具栏，应同步核对 `model.js`、工具栏方法、教程提示及相应测试。
+- 扩展与演示页复用同一应用代码；避免写出只在本地演示页可用、注入任意页面后即失效的实现。
+
+### 3. 页面编辑、选择与历史
+
+- 所有工具通过现有选择引擎读取选中元素；不要另建一套长期存在的选中状态。尊重 Shift 多选、键盘遍历、页面自身的 Shadow DOM，以及 VisBug UI 的排除规则。
+- 修改样式时先考虑 `recordStyleChanges`；修改 DOM 位置、属性或文字时使用对应的历史记录对象。多元素操作应成批记录，使一次用户动作对应一次可理解的撤销。
+- 测试正常执行、撤销、重做和停用工具后的状态。元素删除或移动后，覆盖层不应留在旧位置；滚动、缩放、变换和过渡动画可作为相关功能的边界场景。
+- 避免覆盖宿主页面的全局事件处理器和样式。确需拦截点击或键盘事件时，限定生效条件，并在退出工具后恢复页面行为。
+
+### 4. 插件、输入与导出
+
+- 插件命令名和选中菜单动作 ID 应唯一；激活/停用后菜单与命令注册表保持一致。异步动作应报告失败，不把失败当成功完成。
+- 页面 DOM、选择器、剪贴板文本与外部资源都视为不可信。动态 HTML 优先使用 DOM API 和 `textContent`；确需解析 HTML 时，明确可信来源及边界。不要把页面内容送往未声明的网络服务。
+- 新增导出格式时核对格式名、扩展名、MIME、writer 选择、取消保存和失败事件，并测试至少一个真实元素的输出。
+
+### 5. 测试与构建
+
+| 改动范围 | 最低验证建议 |
+| --- | --- |
+| 文档、注释 | 检查链接、命令和路径；运行 `git diff --check`。无需为纯文档运行浏览器测试。 |
+| 工具或组件行为 | 运行 `npm run bundle` 和相关 AVA/Puppeteer 测试；新增或修改会出错的行为时补回归测试。 |
+| 选择、历史、快捷键 | 测正常操作与退出清理，必要时覆盖多选、撤销/重做和页面输入框焦点。 |
+| 扩展注入、清单、构建脚本 | 运行 `npm run extension:build`，检查生成目录与目标浏览器适配；必要时运行 `npm run extension:package`。 |
+| 影响全项目的变更 | 运行 `npm run test:ci`；其流程包含构建、启动本地服务和 AVA 测试。 |
+
+测试报告必须区分“通过”“失败”“未运行”和“环境阻断”，写出实际命令与关键结果。不能用静态阅读代替运行验证，也不能因为局部测试通过就宣称全部浏览器兼容。
+
+### 6. 文档与评审交付
+
+- 行为变化同步更新相关的 README、工具提示或示例。PR 描述至少包含问题、解决方式、用户可见变化、验证结果和已知限制。
+- 评审重点检查改动范围、生命周期清理、撤销/重做、扩展注入对宿主页面的影响、异步错误以及生成物是否误入提交。
+- 对尚未完成的工作明确标记，不使用“已修复”“已验证”“已发布”等超出证据的表述。
+
+## 三、外部反馈与规则映射
+
+以下是截至 2026-10-30 可访问的公开资料。Stack Overflow 调查统计对象是**AI 开发工具整体**，不能直接解释为 GPT 单一产品的比例；GitHub issue 是个别用户报告，不能推断发生率。
+
+| 公开反馈 | 对应规则 |
+| --- | --- |
+| Stack Overflow 2025 开发者调查：66% 的受访者提到“答案几乎正确却仍有问题”，45% 提到调试 AI 生成代码更耗时；另有 46% 表示不信任 AI 工具输出准确性。 | 要求理解现有实现、做针对性验证、检查差异，并在报告中说明证据与限制。 |
+| Codex issue #54662 报告代理多次忽略仓库内 `AGENTS.md` 的要求。 | 任务开始先读取适用指令，结束时按任务逐项核对交付要求。 |
+| Codex issue #31243 报告小修改可能造成整文件重写并覆盖已有改动。 | 用小范围补丁，保护未提交改动，核查最终 diff。 |
+| Codex issue #41626 报告会话摘要把尚未执行的真实测试写成已验证完成。 | 验证记录只写实际执行的命令与结果；未运行、待批准和模拟结果单独标明。 |
+
+来源：
+
+1. [Stack Overflow Developer Survey 2025 — AI](https://survey.stackoverflow.co/2025/ai#2-ai-tool-frustrations)（“AI tool frustrations”及“Accuracy of AI tools”章节）。
+2. [openai/codex issue #54662](https://github.com/openai/codex/issues/54662)。
+3. [openai/codex issue #31243](https://github.com/openai/codex/issues/31243)。
+4. [openai/codex issue #41626](https://github.com/openai/codex/issues/41626)。
