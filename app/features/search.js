@@ -4,6 +4,7 @@ import { querySelectorAllDeep } from 'query-selector-shadow-dom'
 import { PluginRegistry, PluginHints } from '../plugins/_registry'
 import { notList } from '../utilities'
 import { isFirefox } from '../utilities/cross-browser.js'
+import { localize } from '../localization.js'
 
 let SelectorEngine
 
@@ -47,6 +48,7 @@ const stopBubbling  = e => e.key != 'Escape' && e.stopPropagation()
 
 export function Search(node) {
   if (node) node[0].appendChild(search[0])
+  localize(search_base)
 
   let idleQuery
   const pendingSubmits = new Set()

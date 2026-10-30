@@ -1,3 +1,5 @@
+import { translate } from '../localization'
+
 export const commands = [
   'expand-text',
 ]
@@ -16,9 +18,9 @@ export default async function() {
     "Reference expansion table: https://www.w3.org/International/articles/article-text-size"
   );
   
-  alert(
+  alert(translate(
     'Click on the page, then: \n\nhit the Ctrl key to toggle translation size expansion, or \n\nhit the Shift key to toggle random insertion of spaces.'
-  );
+  ));
   
   englishToExpectedEuropeanLanguageExpansionSize();
   
@@ -33,9 +35,9 @@ export default async function() {
     } else if (event.shiftKey) {
       settings.predictableMode = !settings.predictableMode;
       if (settings.predictableMode) {
-        alert("Spaces will NOT be randomly included.");
+        alert(translate("Spaces will NOT be randomly included."));
       } else {
-        alert("Spaces WILL be randomly included.");
+        alert(translate("Spaces WILL be randomly included."));
       }
     }
   });

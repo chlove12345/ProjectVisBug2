@@ -11,6 +11,45 @@ var platform = typeof browser === 'undefined'
   ? chrome
   : browser
 
+const languageTitles = {
+  en: {
+    launcher: 'Show/Hide',
+    'color-mode': 'Colors',
+    'color-scheme': 'Theme',
+    auto: ' auto',
+    light: ' light',
+    dark: ' dark',
+    action: 'Click or press Alt+Shift+D to launch VisBug2',
+  },
+  'zh-CN': {
+    launcher: '显示/隐藏',
+    'color-mode': '颜色',
+    'color-scheme': '主题',
+    auto: ' 自动',
+    light: ' 浅色',
+    dark: ' 深色',
+    action: '点击或按 Alt+Shift+D 启动 VisBug2',
+  },
+}
+
+const applyLanguageTitles = language => {
+  const {action, ...menus} = languageTitles[language] || languageTitles.en
+  Object.entries(menus).forEach(([id, title]) => {
+    const pending = platform.contextMenus.update(id, {title})
+    pending?.catch?.(() => undefined)
+  })
+  const pending = platform.action.setTitle({title: action})
+  pending?.catch?.(() => undefined)
+}
+
+platform.storage.sync.get(['visbug-language'], values =>
+  applyLanguageTitles(values['visbug-language']))
+
+platform.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && changes['visbug-language'])
+    applyLanguageTitles(changes['visbug-language'].newValue)
+})
+
 const toggleIn = async ({id:tab_id}) => {
   try {
     // toggle out: it's currently loaded and injected

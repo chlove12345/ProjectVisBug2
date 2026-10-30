@@ -1,6 +1,18 @@
 @import "../_variables.css";
+@import "@shoelace-style/shoelace/dist/themes/light.css";
 
 :host {
+  --sl-color-neutral-0: var(--theme-bg);
+  --sl-color-neutral-700: var(--theme-text_color);
+  --sl-color-primary-500: var(--theme-color);
+  --sl-color-primary-600: var(--theme-color);
+  --sl-color-primary-700: var(--theme-color);
+  --sl-input-border-color: var(--theme-icon_color);
+  --sl-input-border-radius-medium: .5em;
+  --sl-input-font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  --sl-focus-ring-color-primary: var(--theme-color);
+  color-scheme: light dark;
+
   position: fixed;
   inset: 0 auto auto 0;
   z-index: var(--layer-1);
@@ -22,6 +34,9 @@
     transition: opacity 0.3s ease, transform 0.2s ease;
   }
 }
+
+:host([color-scheme="light"]) { color-scheme: light; }
+:host([color-scheme="dark"]) { color-scheme: dark; }
 
 :host > ol {
   all: initial;
@@ -108,7 +123,7 @@
     color: var(--theme-text_color);
     box-shadow: 0 0.1em 4.5em hsla(0,0%,0%,15%);
     border-radius: 1em;
-
+    min-width: 22em;
     opacity: 0;
     transform: translateX(-1em);
     will-change: transform, opacity;
@@ -179,7 +194,7 @@
     }
   }
 
-  &:hover:not([data-tool="search"]) > aside,
+  &[data-tool]:hover:not([data-tool="search"]) > aside,
   &[data-tool="search"] > svg:hover + aside {
     opacity: 1;
     transform: translateX(0);
@@ -194,6 +209,110 @@
 
 :host [colors] {
   margin-top: .5em;
+}
+
+:host [settings] {
+  margin-top: .75em;
+}
+
+:host li[data-settings] > button {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 1px solid hsl(0 0% 50% / 25%);
+  border-radius: 50%;
+  background: var(--theme-bd-2);
+  box-shadow: 0 0.2em 0.5em hsl(0 0% 0% / 15%);
+  cursor: pointer;
+}
+
+:host li[data-settings] > button:hover,
+:host li[data-settings] > button[aria-expanded="true"] {
+  background: var(--theme-icon_hover-bg);
+}
+
+:host li[data-settings] > button:focus-visible {
+  outline: 2px solid var(--theme-color);
+  outline-offset: 2px;
+}
+
+:host li[data-settings] > button[aria-expanded="true"] {
+  border-color: var(--theme-color);
+}
+
+:host li[data-settings] > button > svg {
+  display: block;
+  width: 1.125em;
+  height: 1.125em;
+  fill: var(--theme-icon_color);
+}
+
+:host li[data-settings] > button[aria-expanded="true"] > svg {
+  fill: var(--neon-pink);
+}
+
+:host > dialog[data-settings-dialog] {
+  box-sizing: border-box;
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  margin: auto;
+  padding: 1.25rem;
+  border: 1px solid hsl(0 0% 50% / 25%);
+  border-radius: 1em;
+  background: var(--theme-bg);
+  color: var(--theme-text_color);
+  box-shadow: 0 1em 3em hsl(0 0% 0% / 30%);
+  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+}
+
+:host > dialog[data-settings-dialog]::backdrop {
+  background: hsl(0 0% 0% / 40%);
+  backdrop-filter: blur(3px);
+}
+
+:host > dialog[data-settings-dialog] > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+:host > dialog[data-settings-dialog] h2 {
+  margin: 0;
+  font-size: 1.25em;
+}
+
+:host [data-settings-close] {
+  display: grid;
+  place-items: center;
+  width: 2em;
+  height: 2em;
+  padding: 0;
+  border: 0;
+  border-radius: .5em;
+  background: transparent;
+  color: var(--theme-icon_color);
+  font: inherit;
+  font-size: 1.25em;
+  cursor: pointer;
+}
+
+:host [data-settings-close]:hover {
+  background: var(--theme-icon_hover-bg);
+}
+
+:host [data-settings-close]:focus-visible {
+  outline: 2px solid var(--theme-color);
+  outline-offset: 2px;
+}
+
+:host sl-radio-group::part(form-control-label) {
+  color: var(--theme-icon_color);
+  font-weight: 600;
+  margin-bottom: .75em;
 }
 
 :host [colors] > li {

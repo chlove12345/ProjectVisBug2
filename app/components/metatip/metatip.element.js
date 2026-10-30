@@ -2,6 +2,7 @@ import $ from 'blingblingjs'
 import { createClassname, schemeRule } from '../../utilities/'
 import { draggable } from '../../features/'
 import { MetatipStyles, MetatipLightStyles, MetatipDarkStyles } from '../styles.store'
+import { localize } from '../../localization'
 
 export class Metatip extends HTMLElement {
 
@@ -16,6 +17,7 @@ export class Metatip extends HTMLElement {
     this.observe = this.observe.bind(this)
     this.dispatchQuery = this.dispatchQuery.bind(this)
     this.dispatchUnQuery = this.dispatchUnQuery.bind(this)
+    this.localizeLabels = this.localizeLabels.bind(this)
   }
 
   connectedCallback() {
@@ -23,10 +25,12 @@ export class Metatip extends HTMLElement {
     this.showPopover && this.showPopover()
     this.applyScheme(document.querySelector("vis-bug").getAttribute("color-scheme"))
     $(this.$shadow.host).on('mouseenter', this.observe)
+    document.addEventListener('visbug-language-change', this.localizeLabels)
   }
 
   disconnectedCallback() {
     this.unobserve()
+    document.removeEventListener('visbug-language-change', this.localizeLabels)
     this.hidePopover && this.hidePopover()
   }
 
@@ -66,6 +70,12 @@ export class Metatip extends HTMLElement {
 
   set meta(data) {
     this.$shadow.innerHTML = this.render(data)
+    this.localizeLabels()
+  }
+
+  localizeLabels() {
+    this.$shadow.querySelectorAll('summary, [color-swatches] small, [contrast-compliance], [title]')
+      .forEach(localize)
   }
 
   render({el, width, height, localModifications, notLocalModifications}) {

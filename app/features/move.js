@@ -3,6 +3,7 @@ import hotkeys from 'hotkeys-js'
 import { getNodeIndex, showEdge, swapElements, notList } from '../utilities/'
 import { toggleWatching } from './imageswap'
 import { BatchChange, DOMChange, domPosition } from './history'
+import { translate } from '../localization'
 
 const key_events = 'up,down,left,right'
 const state = {
@@ -290,7 +291,7 @@ const createParentUI = parent => {
   hover.position = {el:parent}
   hover.setAttribute('visbug-drag-container', true)
 
-  label.text = 'Drag Bounds'
+  label.text = translate('Drag Bounds')
   label.position = {boundingRect: parent.getBoundingClientRect()}
   label.style.setProperty('--label-bg', 'var(--theme-purple)')
 

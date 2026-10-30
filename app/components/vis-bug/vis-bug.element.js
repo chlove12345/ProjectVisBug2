@@ -1,5 +1,7 @@
 import $          from 'blingblingjs'
 import hotkeys    from 'hotkeys-js'
+import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js'
+import '@shoelace-style/shoelace/dist/components/radio-button/radio-button.js'
 
 import {
   Handles, Handle, Label, Overlay, Gridlines, Corners,
@@ -20,6 +22,7 @@ import {
 
 import { VisBugModel }            from './model'
 import * as Icons                 from './vis-bug.icons'
+import { getLanguage, getSavedLanguage, setLanguage, languageOptions, toolPresentation, translate, localize } from '../../localization'
 import { provideSelectorEngine }  from '../../features/search'
 import {
   PluginRegistry,
@@ -40,6 +43,8 @@ export default class VisBug extends HTMLElement {
     this.toolbar_model  = VisBugModel
     this.$shadow        = this.attachShadow({mode: 'closed'})
     this.promoteTooltip = this.promoteTooltip.bind(this)
+    this.applyLanguage = this.applyLanguage.bind(this)
+    this.closeSettings = this.closeSettings.bind(this)
     this.applyScheme    = schemeRule(
       this.$shadow,
       VisBugStyles, VisBugLightStyles, VisBugDarkStyles
@@ -47,13 +52,15 @@ export default class VisBug extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['color-scheme']
+    return ['color-scheme', 'language']
   }
 
   connectedCallback() {
     this.history = new HistoryManager()
+    setLanguage(this.getAttribute('language') || getSavedLanguage())
 
     this.setup()
+    document.addEventListener('visbug-language-change', this.applyLanguage)
 
     this.selectorEngine = Selectable(this, this.history)
     this.colorPicker    = ColorPicker(this.$shadow, this.selectorEngine, this.history)
@@ -64,6 +71,8 @@ export default class VisBug extends HTMLElement {
   }
 
   disconnectedCallback() {
+    document.removeEventListener('visbug-language-change', this.applyLanguage)
+    this.closeSettings()
     this.deactivate_feature()
     this.cleanup()
     this.selectorEngine.disconnect()
@@ -78,10 +87,35 @@ export default class VisBug extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'color-scheme')
       this.applyScheme(newValue)
+    if (name === 'language' && newValue !== oldValue)
+      setLanguage(newValue)
   }
 
   setup() {
     this.$shadow.innerHTML = this.render()
+    this.applyLanguage()
+
+    const trigger = this.$shadow.querySelector('[data-settings-trigger]')
+    const dialog = this.$shadow.querySelector('[data-settings-dialog]')
+    trigger.addEventListener('click', () => {
+      dialog.showModal()
+      trigger.setAttribute('aria-expanded', 'true')
+    })
+    this.$shadow.querySelector('[data-settings-close]').addEventListener('click', this.closeSettings)
+    dialog.addEventListener('close', () => {
+      trigger.setAttribute('aria-expanded', 'false')
+      if (this.isConnected) trigger.focus()
+    })
+    dialog.addEventListener('keydown', event => event.stopPropagation())
+    this.$shadow.querySelector('[data-language]').addEventListener('sl-change', event => {
+      const language = event.target.value
+      setLanguage(language, true)
+      this.setAttribute('language', language)
+      this.dispatchEvent(new CustomEvent('visbug-language-selected', {
+        bubbles: true,
+        detail: {language},
+      }))
+    })
 
     this.hasAttribute('color-mode')
       ? this.getAttribute('color-mode')
@@ -176,10 +210,37 @@ export default class VisBug extends HTMLElement {
     this.showPopover()
   }
 
+  closeSettings() {
+    const dialog = this.$shadow.querySelector('[data-settings-dialog]')
+    if (dialog?.open) dialog.close()
+  }
+
+  applyLanguage() {
+    this.setAttribute('lang', getLanguage())
+    Object.values(this.toolbar_model).forEach(tool => {
+      const item = this.$shadow.querySelector(`[data-tool="${tool.tool}"]`)
+      if (!item) return
+      const presentation = toolPresentation(tool)
+      item.setAttribute('aria-label', presentation.ariaLabel)
+      item.setAttribute('aria-description', presentation.ariaDescription)
+      item.querySelector('[data-tool-label]').innerHTML = presentation.labelHtml
+      item.querySelector('[data-tool-description]').innerHTML = presentation.descriptionHtml
+    })
+    const languageControl = this.$shadow.querySelector('[data-language]')
+    if (languageControl) {
+      languageControl.value = getLanguage()
+      languageControl.label = translate('Language')
+    }
+    localize(this.$shadow)
+    document.querySelectorAll('visbug-rotation, visbug-handle, visbug-projective-transform')
+      .forEach(element => localize(element.$shadow))
+  }
+
   toolSelected(el) {
     if (typeof el === 'string')
       el = $(`[data-tool="${el}"]`, this.$shadow)[0]
 
+    this.closeSettings()
     if (this.active_tool && this.active_tool.dataset.tool === el.dataset.tool) return
 
     if (this.active_tool) {
@@ -221,6 +282,23 @@ export default class VisBug extends HTMLElement {
           ${Icons.color_border}
         </li>
       </ol>
+      <ol settings>
+        <li data-settings>
+          <button type="button" data-settings-trigger aria-label="Settings" title="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="visbug-settings">
+            ${Icons.settings}
+          </button>
+        </li>
+      </ol>
+      <dialog id="visbug-settings" data-settings-dialog aria-labelledby="visbug-settings-title">
+        <header>
+          <h2 id="visbug-settings-title">Settings</h2>
+          <button type="button" data-settings-close aria-label="Close">&times;</button>
+        </header>
+        <sl-radio-group data-language label="Language">
+          ${languageOptions.map(({value, name}) =>
+            `<sl-radio-button value="${value}">${name}</sl-radio-button>`).join('')}
+        </sl-radio-group>
+      </dialog>
     `
   }
 
@@ -230,10 +308,10 @@ export default class VisBug extends HTMLElement {
         <figure>
           <figcaption>
             <h2>
-              ${label}
+              <span data-tool-label>${label}</span>
               <span hotkey>${key}</span>
             </h2>
-            <p>${description}</p>
+            <p data-tool-description>${description}</p>
             ${instruction}
           </figcaption>
         </figure>

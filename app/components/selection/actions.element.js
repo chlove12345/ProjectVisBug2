@@ -1,5 +1,6 @@
 import { ActionsStyles } from '../styles.store'
 import { getSelectionActions } from '../../plugins/_registry'
+import { localize } from '../../localization'
 
 let nextMenuId = 0
 
@@ -11,6 +12,7 @@ export class SelectionActions extends HTMLElement {
     this.source_el = null
     this.menu_id = `visbug-selection-menu-${nextMenuId++}`
     this.on_registry_change = this.render.bind(this)
+    this.on_language_change = () => localize(this.$shadow)
     this.on_keydown = this.on_keydown.bind(this)
     this.on_pointerdown = this.on_pointerdown.bind(this)
     this.on_click = this.on_click.bind(this)
@@ -20,6 +22,7 @@ export class SelectionActions extends HTMLElement {
   connectedCallback() {
     this.$shadow.adoptedStyleSheets = [ActionsStyles]
     document.addEventListener('visbug-selection-actions-change', this.on_registry_change)
+    document.addEventListener('visbug-language-change', this.on_language_change)
     this.addEventListener('keydown', this.on_keydown)
     this.$shadow.addEventListener('pointerdown', this.on_pointerdown)
     this.$shadow.addEventListener('click', this.on_click)
@@ -28,6 +31,7 @@ export class SelectionActions extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('visbug-selection-actions-change', this.on_registry_change)
+    document.removeEventListener('visbug-language-change', this.on_language_change)
     this.removeEventListener('keydown', this.on_keydown)
     this.$shadow.removeEventListener('pointerdown', this.on_pointerdown)
     this.$shadow.removeEventListener('click', this.on_click)
@@ -230,6 +234,7 @@ export class SelectionActions extends HTMLElement {
     button.popoverTargetElement = menu
 
     this.$shadow.append(button, menu)
+    localize(this.$shadow)
   }
 }
 

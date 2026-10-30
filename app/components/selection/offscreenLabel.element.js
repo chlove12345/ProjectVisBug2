@@ -1,5 +1,6 @@
 import $ from 'blingblingjs'
 import { OffscreenLabelStyles } from '../styles.store'
+import { translate } from '../../localization'
 
 window.addEventListener('scroll', positionFlags)
 
@@ -7,6 +8,17 @@ window.addEventListener('scroll', positionFlags)
 document.body.addEventListener('click', () => {
   removeOffscreenLabelIndicators()
 }, true)
+
+document.addEventListener('visbug-language-change', () => {
+  document.querySelectorAll('visbug-offscreen-label').forEach(updateHoverText)
+})
+
+function updateHoverText(label) {
+  const text = label.hoverText
+    ? `${translate('offscreen label:')} ${label.hoverText}`
+    : label.count
+  label.style.setProperty('--hover-text', `"\\00a0 ${text}"`)
+}
 
 function positionFlags() {
   removeOffscreenLabelIndicators()
@@ -94,8 +106,9 @@ export function createOffscreenLabelIndicator(node_label_id, text, hoverText, le
     instance.seen[node_label_id] = true;
     instance.count = Object.keys(instance.seen).length
     instance.text = text
+    instance.hoverText = hoverText
     instance.style.setProperty('--count', `"\\00a0 ${instance.count}"`);
-    instance.style.setProperty('--hover-text', `"\\00a0 ${hoverText ? 'offscreen label: ' + hoverText : instance.count}"`);
+    updateHoverText(instance)
     if (adjustRightSideToCount) {
       left = left.includes('calc(') ? left.replace(')', ` - ${instance.count.toString().length}ch)`) : `${instance.count.toString().length}ch`
       instance.style.setProperty('--left', left)
@@ -115,11 +128,12 @@ export function createOffscreenLabelIndicator(node_label_id, text, hoverText, le
   label.seen[node_label_id] = true
   label.count = 1
   label.text = text
+  label.hoverText = hoverText
   label.style.display = ''
   label.style.setProperty('--left', left)
   label.style.setProperty('--top', top)
   label.style.setProperty('--count', `"\\00a0 ${label.count}"`)
-  label.style.setProperty('--hover-text', `"\\00a0 ${hoverText ? 'offscreen label: ' + hoverText : label.count}"`)
+  updateHoverText(label)
   if (color) label.style.setProperty('--label-bg', color)
 
   if (adjustRightSideToCount) {

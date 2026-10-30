@@ -1,5 +1,6 @@
 import $ from 'blingblingjs'
 import { HandleStyles } from '../styles.store'
+import { localize } from '../../localization'
 import { screenDeltaToLocal } from './resize'
 import { BatchChange, StyleChange } from '../../features/history'
 
@@ -15,6 +16,7 @@ export class Handle extends HTMLElement {
   connectedCallback() {
     this.$shadow.adoptedStyleSheets = this.styles
     this.$shadow.innerHTML = this.render()
+    localize(this.$shadow)
 
     this.button = this.$shadow.querySelector('button')
     this.button.addEventListener('pointerdown', this.on_resize_start)

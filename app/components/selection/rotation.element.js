@@ -1,4 +1,5 @@
 import { RotationStyles } from '../styles.store'
+import { localize } from '../../localization'
 import { getBoxQuad, pointOutsideQuad, quadCenter } from './quad'
 import { normalizeAngleDelta } from './rotation'
 import { BatchChange, StyleChange } from '../../features/history'
@@ -22,6 +23,7 @@ export class Rotation extends HTMLElement {
   connectedCallback() {
     this.$shadow.adoptedStyleSheets = this.styles
     this.$shadow.innerHTML = this.render()
+    localize(this.$shadow)
     this.handle = this.$shadow.querySelector('.rotation-handle')
     this.line_svg = this.$shadow.querySelector('.rotation-line')
     this.line = this.$shadow.querySelector('.rotation-line line')

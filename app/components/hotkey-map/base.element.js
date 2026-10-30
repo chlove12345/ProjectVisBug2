@@ -3,6 +3,7 @@ import hotkeys             from 'hotkeys-js'
 import * as Icons          from '../vis-bug/vis-bug.icons'
 import { HotkeymapStyles, HotkeymapLightStyles, HotkeymapDarkStyles } from '../styles.store'
 import { metaKey, altKey, schemeRule } from '../../utilities/'
+import { localize } from '../../localization'
 
 export class HotkeyMap extends HTMLElement {
 
@@ -26,6 +27,7 @@ export class HotkeyMap extends HTMLElement {
     }
 
     this.$shadow    = this.attachShadow({mode: 'closed'})
+    this.localize = () => localize(this.$shadow)
 
     this._hotkey    = ''
     this._usedkeys  = []
@@ -39,6 +41,8 @@ export class HotkeyMap extends HTMLElement {
   }
 
   connectedCallback() {
+    document.addEventListener('visbug-language-change', this.localize)
+    this.localize()
     this.applyScheme(document.querySelector("vis-bug").getAttribute("color-scheme"))
     this.$shift  = $('[keyboard] > section > [shift]', this.$shadow)
     this.$ctrl   = $('[keyboard] > section > [ctrl]', this.$shadow)
@@ -50,11 +54,14 @@ export class HotkeyMap extends HTMLElement {
     this.$right  = $('[arrows] [right]', this.$shadow)
   }
 
-  disconnectedCallback() {}
+  disconnectedCallback() {
+    document.removeEventListener('visbug-language-change', this.localize)
+  }
 
   set tool(tool) {
     this._tool = tool
     this.$shadow.innerHTML = this.render()
+    this.localize()
   }
 
   show() {
@@ -85,6 +92,7 @@ export class HotkeyMap extends HTMLElement {
     $('[command]', this.$shadow)[0].innerHTML = this.displayCommand({
       negative, negative_modifier, side, amount,
     })
+    this.localize()
   }
 
   createCommand({e:{code}, hotkeys}) {

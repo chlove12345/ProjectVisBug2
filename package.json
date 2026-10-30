@@ -47,6 +47,7 @@
     "@chenglou/pretext": "^0.0.8",
     "@ctrl/tinycolor": "^4.2.0",
     "@node-projects/layout2vector": "^5.29.0",
+    "@shoelace-style/shoelace": "^2.20.1",
     "blingblingjs": "^2.3.0",
     "colorjs.io": "^0.7.1",
     "construct-style-sheets-polyfill": "^3.1.0",

@@ -1,4 +1,5 @@
 import { ProjectiveTransformStyles } from '../styles.store'
+import { localize } from '../../localization'
 import { StyleChange } from '../../features/history'
 import { getBoxQuad, quadPath } from './quad'
 import {
@@ -39,6 +40,7 @@ export class ProjectiveTransform extends HTMLElement {
   connectedCallback() {
     this.$shadow.adoptedStyleSheets = this.styles
     this.$shadow.innerHTML = this.render()
+    localize(this.$shadow)
     this.svg = this.$shadow.querySelector('svg')
     this.path = this.$shadow.querySelector('.outline')
     this.svg.addEventListener('pointerdown', this.on_pointer_down)
@@ -424,6 +426,8 @@ export class ProjectiveTransform extends HTMLElement {
               r="${HANDLE_RADIUS}"
               role="button"
               aria-label="Move corner ${index + 1}"
+              data-i18n-aria-label="moveCorner"
+              data-i18n-number="${index + 1}"
             ></circle>
             <line class="cross" x1="-${CROSS_RADIUS}" x2="${CROSS_RADIUS}"></line>
             <line class="cross" y1="-${CROSS_RADIUS}" y2="${CROSS_RADIUS}"></line>
