@@ -2,7 +2,7 @@ import $ from 'blingblingjs'
 import hotkeys from 'hotkeys-js'
 import { querySelectorAllDeep } from 'query-selector-shadow-dom'
 import { PluginRegistry, PluginHints } from '../plugins/_registry'
-import { notList } from '../utilities'
+import { isOffBounds, notList } from '../utilities'
 import { isFirefox } from '../utilities/cross-browser.js'
 import { localize } from '../localization.js'
 
@@ -143,6 +143,7 @@ export function queryPage(query, fn) {
   try {
     let matches = querySelectorAllDeep(query + notList)
     if (!matches.length) matches = querySelectorAllDeep(query)
+    matches = matches.filter(el => !isOffBounds(el))
     if (matches.length) {
       if (fn) matches.forEach(el => fn(el))
       else SelectorEngine.select(matches)

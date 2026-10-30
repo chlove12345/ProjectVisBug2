@@ -79,7 +79,7 @@ export const htmlStringToDom = (htmlString = "") =>
     .body.firstChild
 
 export const isOffBounds = node =>
-  node.closest && (
+  node?.closest && (
        node.closest('vis-bug')
     || node.closest('visbug-history-controls')
     || node.closest('hotkey-map')
@@ -93,6 +93,7 @@ export const isOffBounds = node =>
     || node.closest('visbug-gridlines')
     || node.closest('visbug-rotation')
     || node.closest('visbug-projective-transform')
+    || isOffBounds(node.getRootNode?.().host)
   )
 
 export const isSelectorValid = (qs => (

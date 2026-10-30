@@ -570,11 +570,12 @@ export function Selectable(visbug, history) {
     const targets = elements?.nodeType === Node.ELEMENT_NODE
       ? [elements]
       : Array.from(elements || [])
+    const editableTargets = targets.filter(el => el && !isOffBounds(el))
 
-    if (!targets.length) return
+    if (!editableTargets.length) return
 
     const tool = visbug.activeTool
-    const geometry = targets.map(el => {
+    const geometry = editableTargets.map(el => {
       const quad = getBoxQuad(el)
       return {
         boundingRect: quadBounds(quad),
