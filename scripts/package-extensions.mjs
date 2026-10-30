@@ -24,7 +24,7 @@ if (!/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(version)) {
   )
 }
 
-const sourceEntries = ['visbug.js', 'contextmenu', 'icons', 'toolbar', 'tuts']
+const sourceEntries = ['visbug.js', 'contextmenu', 'icons', 'toolbar']
 
 for (const entry of sourceEntries) {
   await access(path.join(extensionDirectory, entry))

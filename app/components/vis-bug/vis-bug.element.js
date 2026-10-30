@@ -51,7 +51,6 @@ export default class VisBug extends HTMLElement {
   }
 
   connectedCallback() {
-    this._tutsBaseURL = this.getAttribute('tutsBaseURL') || 'tuts'
     this.history = new HistoryManager()
 
     this.setup()
@@ -229,7 +228,6 @@ export default class VisBug extends HTMLElement {
     return `
       <aside ${tool}>
         <figure>
-          <img src="${this._tutsBaseURL}/${tool}.gif" alt="${description}" />
           <figcaption>
             <h2>
               ${label}

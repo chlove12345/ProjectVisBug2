@@ -25,7 +25,6 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "tuts/*.gif",
         "toolbar/*",
         "toolbar/chunks/*"
       ],

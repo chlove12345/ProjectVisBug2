@@ -65,7 +65,8 @@ The static demo is generated in `app/`.
 
 本项目已按 [OpenSpec](https://openspec.dev/docs/quickstart) 的 `spec-driven` 模式
 初始化 Codex 技能。先运行 `npm install -g @fission-ai/openspec@latest` 安装 CLI；
-在 Codex Desktop 的 Skills 中使用 `openspec-propose` 编写变更提案，确认后使用
+对于复杂或需要先规划的变更，在 Codex Desktop 的 Skills 中使用
+`openspec-propose` 编写变更提案，确认后使用
 `openspec-apply-change` 实施。项目配置位于 `openspec/config.yaml`，生成的规范文档
 优先使用简体中文。
 
